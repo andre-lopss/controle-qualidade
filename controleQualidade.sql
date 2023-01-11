@@ -175,9 +175,10 @@ SELECT CAST(DATEDIFF(MINUTE, MIN(IFA.HR_AVALIACAO) , CONVERT(TIME, MAX(IFA.HR_AV
 FROM   PRODUCAO.INSPETOR AS I,
        PRODUCAO.FICHA_AVALIACAO AS FA,
 	   PRODUCAO.ITEM_FICHA_AVALIACAO AS IFA
-WHERE  I.CD_MATRICULA_INSPETOR = FA.CD_MATRICULA_INSPETOR
+WHERE  I.CD_MATRICULA_INSPETOR = 7
 	   AND FA.DT_FICHA_AVALIACAO = '20221216'
 	   AND FA.CD_FICHA_AVALIACAO = IFA.CD_FICHA_AVALIACAO
+-- R: 1h10
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --2. Quantas horas o inspetor Trancoso da Silva trabalhou no período de 01/12/2022 à 22/12/2022?
@@ -187,12 +188,14 @@ FROM   PRODUCAO.INSPETOR AS INSP,
        PRODUCAO.FICHA_AVALIACAO AS FA,
 	   PRODUCAO.ITEM_FICHA_AVALIACAO AS IFA
 WHERE  INSP.CD_MATRICULA_INSPETOR = FA.CD_MATRICULA_INSPETOR
+	   AND INSP.CD_MATRICULA_INSPETOR = 7
 	   AND FA.DT_FICHA_AVALIACAO BETWEEN '20221201' AND '20221216' 
 	   AND FA.CD_FICHA_AVALIACAO = IFA.CD_FICHA_AVALIACAO
+-- R: 5h56
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --3.Quais os tipos de defeito mais recorrentes no período de 01/12/2022 à 22/12/2022?
-SELECT IFA.SG_AVALIACAO AS "Defeitos", COUNT(*) AS "Quantidade"
+SELECT IFA.SG_AVALIACAO AS Defeitos, COUNT(*) AS Quantidade
 FROM   PRODUCAO.AVALIACAO AS AV,
        PRODUCAO.FICHA_AVALIACAO AS FA,
 	   PRODUCAO.ITEM_FICHA_AVALIACAO AS IFA
@@ -202,11 +205,16 @@ WHERE  IFA.SG_AVALIACAO = AV.SG_AVALIACAO
 	   AND FA.CD_FICHA_AVALIACAO = IFA.CD_FICHA_AVALIACAO
 GROUP BY IFA.SG_AVALIACAO
 ORDER BY COUNT(*) DESC
+-- R:  Defeitos | Quantidade
+--     PT		| 9
+--     EL		| 8
+--     PE		| 7
+--     TR		| 4
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- 4. Quais inspetores atestam mais produtos com avaliação TR, todo rejeitado.
 SELECT INSP.NM_INSPETOR AS Inspetor, 
-	   IFA.SG_AVALIACAO AS AValiação,
+	   IFA.SG_AVALIACAO AS Avaliação,
 	   COUNT(*) AS "Quantidade"
 FROM   PRODUCAO.AVALIACAO AS AV,
        PRODUCAO.FICHA_AVALIACAO AS FA,
@@ -218,9 +226,13 @@ WHERE  INSP.CD_MATRICULA_INSPETOR = FA.CD_MATRICULA_INSPETOR
 	   AND FA.CD_FICHA_AVALIACAO = IFA.CD_FICHA_AVALIACAO
 GROUP BY IFA.SG_AVALIACAO , INSP.NM_INSPETOR
 ORDER BY Quantidade DESC
+--R: |Inspetor  |Avaliação
+--   |Maria	    |TR	2
+--   |Trancoso	|TR	1
+--   |André	    |TR	1
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---5. Quais PRODUTOs que só foram liberados depois da detecção de algum problema?
+--5. Quais produtos que só foram liberados depois da detecção de algum problema?
 --(A lógica usada foi: Se o produto de código tal tiver mais de uma avaliação, significa que ele retornou pra inspeção antes de ser liberado. 
 --Juntei as tabelas, fiz o join, contei quantas vezes esse PRODUTO passou pela avaliação e se foi maior que 1 ele teve a última avaliação como OK)."
 SELECT PROD.CD_PRODUTO AS ID, 
@@ -233,3 +245,26 @@ FROM   PRODUCAO.ITEM_FICHA_AVALIACAO IFA
 	   INNER JOIN PRODUCAO.FICHA_AVALIACAO FA ON FA.CD_FICHA_AVALIACAO = IFA.CD_FICHA_AVALIACAO 
 GROUP BY PROD.CD_PRODUTO, TIPOPROD.NM_PRODUTO
 HAVING COUNT(IFA.CD_ITEM_FICHA_AVALIACAO) > 1
+--R:|ID |PRODUTO            |Qte de AValiações
+--  |1	|Geladeira	        |2
+--  |5	|Frigobar	        |2
+--  |9	|Freezer	        |2
+--  |10	|Frigobar	        |2
+--  |11	|Geladeira	        |2
+--  |12	|Máquina de lavar	|2
+--  |13	|Fogão	            |2
+--  |14	|Freezer	        |2
+--  |15	|Máquina de lavar	|2
+--  |16	|Fogão	            |2
+--  |17	|Freezer	        |2
+--  |19	|Máquina de lavar	|2
+--  |21	|Geladeira	        |2
+--  |23	|Fogão	            |2
+--  |25	|Frigobar	        |2
+--  |37	|Freezer	        |2
+--  |38	|Frigobar	        |2
+--  |41	|Frigobar	        |2
+--  |43	|Máquina de lavar	|3
+--  |46	|Máquina de lavar	|2
+--  |48	|Freezer	        |2
+--  |50	|Máquina de lavar	|2
